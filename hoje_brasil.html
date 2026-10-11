@@ -1,0 +1,505 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Horas do Brasil</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,300;6..72,400;6..72,500&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  /* Layout: Brasília em destaque no topo, os outros três fusos em grade abaixo, cada um com a lista dos estados que seguem aquele horário. */
+  :root {
+    --bg: #f5f3ec;
+    --surface: #fbfaf6;
+    --fg: #29261f;
+    --muted: #6f6a5c;
+    --line: #e1ddd0;
+    --accent: #c4623f;
+    --accent-soft: #f0dfd5;
+    --font-display: "Newsreader", "Iowan Old Style", Georgia, serif;
+    --font-body: "DM Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #1f1d19;
+      --surface: #272520;
+      --fg: #efebe0;
+      --muted: #a39e8f;
+      --line: #3a372f;
+      --accent: #e08863;
+      --accent-soft: #3a2b23;
+      color-scheme: dark;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #1f1d19;
+    --surface: #272520;
+    --fg: #efebe0;
+    --muted: #a39e8f;
+    --line: #3a372f;
+    --accent: #e08863;
+    --accent-soft: #3a2b23;
+    color-scheme: dark;
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    background: var(--bg);
+    color: var(--fg);
+    font-family: var(--font-body);
+    font-size: 16px;
+    line-height: 1.5;
+    padding-inline: 1.25rem;
+    padding-block: 2.5rem 3rem;
+  }
+  .wrap { max-width: 90rem; margin-inline: auto; display: flex; flex-direction: column; gap: 2rem; }
+
+  header { display: flex; flex-direction: column; gap: 0.5rem; }
+  .eyebrow {
+    font-size: 0.75rem; font-weight: 600; letter-spacing: 0.12em;
+    text-transform: uppercase; color: var(--accent);
+  }
+  h1 {
+    font-family: var(--font-display); font-weight: 400;
+    font-size: clamp(2.25rem, 6vw, 3.5rem); line-height: 1.05;
+    margin: 0; text-wrap: balance; letter-spacing: -0.01em;
+  }
+  .lede { margin: 0; color: var(--muted); max-width: 40rem; text-wrap: pretty; }
+
+  .clock {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 1rem;
+    padding: 1.5rem;
+    display: flex; flex-direction: column; gap: 1.25rem;
+    min-width: 0;
+  }
+  .clock-head { display: flex; justify-content: space-between; align-items: baseline; gap: 0.75rem; flex-wrap: wrap; }
+  .clock-name { font-weight: 600; font-size: 1rem; }
+  .offset {
+    font-size: 0.75rem; font-weight: 600; letter-spacing: 0.06em;
+    color: var(--accent); background: var(--accent-soft);
+    padding: 0.2rem 0.6rem; border-radius: 999px;
+  }
+
+  .time {
+    font-family: var(--font-display); font-weight: 300;
+    font-variant-numeric: tabular-nums lining-nums;
+    font-size: clamp(2.75rem, 11vw, 4rem); font-size: clamp(2rem, 25cqw, 4rem); line-height: 1; letter-spacing: -0.01em;
+    display: flex; align-items: baseline; flex-wrap: wrap; gap: 0 0.1em;
+  }
+  .time .sec { color: var(--accent); }
+  .time .sep { color: var(--muted); font-weight: 300; }
+
+  .date { display: flex; flex-wrap: wrap; gap: 0.5rem 1.5rem; align-items: flex-end; }
+  .date-part { display: flex; flex-direction: column; gap: 0.1rem; min-width: 0; }
+  .date-label {
+    font-size: 0.6875rem; font-weight: 600; letter-spacing: 0.1em;
+    text-transform: uppercase; color: var(--muted);
+  }
+  .date-value { font-family: var(--font-display); font-size: 1.375rem; line-height: 1.2; text-transform: capitalize; font-variant-numeric: lining-nums; }
+
+  .states { margin: 0; padding-top: 1rem; border-top: 1px solid var(--line); font-size: 0.875rem; color: var(--muted); text-wrap: pretty; }
+
+  /* Brasília: destaque */
+  .clock.main { padding: clamp(1.5rem, 4vw, 2.5rem); gap: 1.75rem; }
+  .clock.main .time { font-size: clamp(3.5rem, 17vw, 8rem); font-size: clamp(3rem, 25cqw, 8rem); }
+  .clock.main .date-value { font-size: clamp(1.5rem, 4vw, 2.25rem); }
+  .clock.main .clock-name { font-size: 1.125rem; }
+  .clock.main .states { font-size: 0.9375rem; }
+
+  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr)); gap: 1rem; }
+
+  footer { font-size: 0.8125rem; color: var(--muted); display: flex; flex-direction: column; gap: 0.25rem; }
+  footer p { margin: 0; text-wrap: pretty; }
+
+  .top { display: flex; justify-content: space-between; align-items: center; gap: 1rem; flex-wrap: wrap; }
+  .theme-btn {
+    display: inline-flex; align-items: center; gap: 0.5rem;
+    font: inherit; font-size: 0.8125rem; font-weight: 600;
+    color: var(--fg); background: var(--surface);
+    border: 1px solid var(--line); border-radius: 999px;
+    padding: 0.45rem 0.9rem; cursor: pointer;
+  }
+  .theme-btn:hover { border-color: var(--accent); }
+  .theme-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .ico { display: inline-flex; }
+  .ico svg { width: 1rem; height: 1rem; }
+
+  .layout {
+    display: grid; gap: 1rem; align-items: start;
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas: "clocks" "cal" "hol";
+  }
+  .cal-row { display: contents; }
+  .clocks { grid-area: clocks; display: flex; flex-direction: column; gap: 1rem; min-width: 0; }
+  .clock { container-type: inline-size; }
+  .calendar, .holidays {
+    min-width: 0;
+    background: var(--surface); border: 1px solid var(--line); border-radius: 1rem;
+    padding: 1.5rem; display: flex; flex-direction: column; gap: 1rem;
+  }
+  .cal-head { display: flex; justify-content: space-between; align-items: baseline; gap: 0.75rem; flex-wrap: wrap; }
+  .cal-title { font-family: var(--font-display); font-weight: 400; font-size: 1.75rem; line-height: 1.1; margin: 0; text-transform: capitalize; }
+  .cal-year { color: var(--muted); font-size: 0.875rem; font-weight: 600; letter-spacing: 0.06em; font-variant-numeric: tabular-nums; }
+  .cal-grid { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 0.25rem; }
+  .cal-dow {
+    font-size: 0.6875rem; font-weight: 600; letter-spacing: 0.08em;
+    text-transform: uppercase; color: var(--muted); text-align: center; padding-bottom: 0.25rem;
+  }
+  .cal-day {
+    aspect-ratio: 1; display: flex; align-items: center; justify-content: center;
+    border-radius: 0.625rem; font-size: 0.9375rem;
+    font-variant-numeric: tabular-nums lining-nums;
+  }
+  .cal-day.sun { color: var(--muted); }
+  .cal-day.today { background: var(--accent-soft); box-shadow: inset 0 0 0 2px var(--accent); color: var(--fg); font-weight: 600; }
+  .cal-note { margin: 0; font-size: 0.875rem; color: var(--muted); text-wrap: pretty; }
+
+  .calendar { grid-area: cal; max-width: 30rem; }
+  .holidays { grid-area: hol; container-type: inline-size; container-name: hol; }
+  @media (min-width: 45rem) {
+    .layout {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      grid-template-areas: "clocks clocks" "cal hol";
+      align-items: stretch;
+    }
+    .calendar { max-width: none; }
+  }
+  /* Tela larga: coluna da esquerda (calendário + feriados) com a mesma altura dos relógios.
+     A lista de feriados rola dentro do cartão e abre já no próximo feriado. */
+  @media (min-width: 72rem) {
+    .layout {
+      grid-template-columns: minmax(20rem, 24rem) minmax(0, 1fr);
+      grid-template-areas: "side clocks";
+      align-items: stretch;
+    }
+    .cal-row { grid-area: side; display: flex; flex-direction: column; gap: 1rem; min-width: 0; min-height: 0; }
+    .calendar { flex: 0 0 auto; max-width: none; }
+    .cal-day { aspect-ratio: 1.3; }
+    .holidays { flex: 1 1 0; min-height: 0; contain: size; overflow: hidden; }
+    .hol-list {
+      flex: 1 1 0; min-height: 0; overflow-y: auto; padding-right: 0.25rem;
+      scrollbar-width: thin; scrollbar-color: var(--line) transparent;
+    }
+  }
+  .holidays .cal-title { text-transform: none; }
+
+  .hol-list { position: relative; list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
+  .hol {
+    display: grid; grid-template-columns: 3.25rem minmax(0, 1fr) auto;
+    align-items: center; gap: 0 0.75rem;
+    padding: 0.5rem 0; border-top: 1px solid var(--line);
+  }
+  .hol:first-child { border-top: 0; }
+  .hol-date { display: flex; flex-direction: column; align-items: center; line-height: 1.1; }
+  .hol-day { font-family: var(--font-display); font-size: 1.375rem; font-variant-numeric: tabular-nums lining-nums; }
+  .hol-mon { font-size: 0.6875rem; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
+  .hol-info { display: flex; flex-direction: column; min-width: 0; }
+  .hol-name { font-weight: 500; font-size: 0.9375rem; }
+  .hol-sub { font-size: 0.8125rem; color: var(--muted); }
+  .hol-chip { font-size: 0.75rem; font-weight: 600; color: var(--muted); white-space: nowrap; }
+  .hol.past .hol-name, .hol.past .hol-day { color: var(--muted); }
+  .hol.next .hol-name { font-weight: 600; }
+  .hol.next .hol-chip { color: var(--accent); background: var(--accent-soft); padding: 0.2rem 0.6rem; border-radius: 999px; }
+
+  @media (prefers-reduced-motion: no-preference) {
+    .time .sec { transition: opacity 0.15s ease; }
+  }
+</style>
+
+<div class="wrap">
+  <header>
+    <div class="top">
+      <span class="eyebrow">Fusos horários do Brasil</span>
+      <button type="button" class="theme-btn" id="themeBtn" aria-pressed="false">
+        <span class="ico" id="iconMoon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg></span>
+        <span class="ico" id="iconSun" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg></span>
+        <span id="themeLabel">Modo escuro</span>
+      </button>
+    </div>
+    <h1>Que horas são em cada canto do país?</h1>
+    <p class="lede">O Brasil tem quatro fusos horários, de UTC−2 a UTC−5. Os relógios abaixo atualizam a cada segundo.</p>
+  </header>
+
+  <div class="layout">
+  <main class="clocks" id="clocks" aria-live="off"></main>
+
+  <div class="cal-row">
+  <section class="calendar" aria-label="Calendário do mês atual">
+    <div class="cal-head">
+      <h2 class="cal-title" id="calTitle">Mês</h2>
+      <span class="cal-year" id="calYear"></span>
+    </div>
+    <div class="cal-grid" id="calGrid"></div>
+    <p class="cal-note" id="calNote"></p>
+  </section>
+
+  <section class="holidays" aria-label="Feriados do ano">
+    <div class="cal-head">
+      <h2 class="cal-title" id="holTitle">Feriados</h2>
+    </div>
+    <p class="cal-note" id="holSummary"></p>
+    <ul class="hol-list" id="holList"></ul>
+  </section>
+  </div>
+  </div>
+
+  <footer>
+    <p>O Brasil não usa horário de verão desde 2019, então os fusos ficam fixos o ano inteiro.</p>
+    <p>A hora vem do relógio do seu dispositivo, convertida para cada fuso.</p>
+  </footer>
+</div>
+
+<script>
+  var ZONES = [
+    {
+      id: "brasilia", main: true, tz: "America/Sao_Paulo", name: "Horário de Brasília", offset: "UTC−3",
+      states: "Distrito Federal, Alagoas, Amapá, Bahia, Ceará, Espírito Santo, Goiás, Maranhão, Minas Gerais, Pará, Paraíba, Paraná, Pernambuco, Piauí, Rio de Janeiro, Rio Grande do Norte, Rio Grande do Sul, Santa Catarina, São Paulo, Sergipe e Tocantins."
+    },
+    {
+      id: "noronha", tz: "America/Noronha", name: "Fernando de Noronha", offset: "UTC−2",
+      states: "Arquipélago de Fernando de Noronha (PE), Atol das Rocas (RN), Ilha da Trindade e Martim Vaz (ES)."
+    },
+    {
+      id: "amazonas", tz: "America/Manaus", name: "Horário do Amazonas", offset: "UTC−4",
+      states: "Amazonas (maior parte), Mato Grosso, Mato Grosso do Sul, Rondônia e Roraima."
+    },
+    {
+      id: "acre", tz: "America/Rio_Branco", name: "Horário do Acre", offset: "UTC−5",
+      states: "Acre e o sudoeste do Amazonas."
+    }
+  ];
+
+  var root = document.getElementById("clocks");
+  var grid = document.createElement("div");
+  grid.className = "grid";
+  var refs = {};
+
+  function el(tag, cls, text) {
+    var e = document.createElement(tag);
+    if (cls) e.className = cls;
+    if (text != null) e.textContent = text;
+    return e;
+  }
+
+  function datePart(label) {
+    var wrap = el("div", "date-part");
+    wrap.appendChild(el("span", "date-label", label));
+    var v = el("span", "date-value", "–");
+    wrap.appendChild(v);
+    return { wrap: wrap, value: v };
+  }
+
+  ZONES.forEach(function (z) {
+    var card = el("section", "clock" + (z.main ? " main" : ""));
+    card.setAttribute("aria-label", z.name);
+
+    var head = el("div", "clock-head");
+    head.appendChild(el("span", "clock-name", z.name));
+    head.appendChild(el("span", "offset", z.offset));
+    card.appendChild(head);
+
+    var time = el("div", "time");
+    var h = el("span", "hh", "00"), m = el("span", "mm", "00"), s = el("span", "sec", "00");
+    time.appendChild(h);
+    time.appendChild(el("span", "sep", ":"));
+    time.appendChild(m);
+    time.appendChild(el("span", "sep", ":"));
+    time.appendChild(s);
+    card.appendChild(time);
+
+    var date = el("div", "date");
+    var wd = datePart("Dia da semana"), dd = datePart("Dia"), mo = datePart("Mês"), yy = datePart("Ano");
+    [wd, dd, mo, yy].forEach(function (p) { date.appendChild(p.wrap); });
+    card.appendChild(date);
+
+    card.appendChild(el("p", "states", z.states));
+
+    refs[z.id] = { h: h, m: m, s: s, wd: wd.value, dd: dd.value, mo: mo.value, yy: yy.value };
+    var formatter = new Intl.DateTimeFormat("pt-BR", {
+      timeZone: z.tz, weekday: "long", day: "numeric", month: "long", year: "numeric",
+      hour: "2-digit", minute: "2-digit", second: "2-digit", hourCycle: "h23"
+    });
+    refs[z.id].fmt = formatter;
+
+    if (z.main) root.appendChild(card); else grid.appendChild(card);
+  });
+  root.appendChild(grid);
+
+  function tick() {
+    var now = new Date();
+    ZONES.forEach(function (z) {
+      var r = refs[z.id], parts = {};
+      r.fmt.formatToParts(now).forEach(function (p) { parts[p.type] = p.value; });
+      r.h.textContent = parts.hour;
+      r.m.textContent = parts.minute;
+      r.s.textContent = parts.second;
+      r.wd.textContent = parts.weekday.replace(/-feira$/, "");
+      r.dd.textContent = parts.day;
+      r.mo.textContent = parts.month;
+      r.yy.textContent = parts.year;
+    });
+    updateCalendar(now);
+    setTimeout(tick, 1000 - (now.getMilliseconds() % 1000) + 5);
+  }
+  /* Calendário do mês atual (data de Brasília) */
+  var MESES = ["janeiro", "fevereiro", "março", "abril", "maio", "junho", "julho", "agosto", "setembro", "outubro", "novembro", "dezembro"];
+  var DOW_CURTO = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
+  var DOW_LONGO = ["domingo", "segunda-feira", "terça-feira", "quarta-feira", "quinta-feira", "sexta-feira", "sábado"];
+  var calFmt = new Intl.DateTimeFormat("en-CA", { timeZone: "America/Sao_Paulo", year: "numeric", month: "numeric", day: "numeric" });
+  var calKey = "";
+  var calTitle = document.getElementById("calTitle");
+  var calYear = document.getElementById("calYear");
+  var calGrid = document.getElementById("calGrid");
+  var calNote = document.getElementById("calNote");
+
+  function updateCalendar(now) {
+    var p = {};
+    calFmt.formatToParts(now).forEach(function (x) { p[x.type] = x.value; });
+    var y = +p.year, m = +p.month, d = +p.day;
+    var key = y + "-" + m + "-" + d;
+    if (key === calKey) return;
+    calKey = key;
+
+    var offset = new Date(Date.UTC(y, m - 1, 1)).getUTCDay();
+    var total = new Date(Date.UTC(y, m, 0)).getUTCDate();
+    var weekday = new Date(Date.UTC(y, m - 1, d)).getUTCDay();
+
+    calTitle.textContent = MESES[m - 1];
+    calYear.textContent = y;
+    calGrid.textContent = "";
+
+    DOW_CURTO.forEach(function (n) { calGrid.appendChild(el("span", "cal-dow", n)); });
+    for (var i = 0; i < offset; i++) calGrid.appendChild(el("span", "cal-empty"));
+    for (var day = 1; day <= total; day++) {
+      var cell = el("span", "cal-day", String(day));
+      if ((offset + day - 1) % 7 === 0) cell.classList.add("sun");
+      if (day === d) {
+        cell.classList.add("today");
+        cell.setAttribute("aria-current", "date");
+      }
+      calGrid.appendChild(cell);
+    }
+    calNote.textContent = "Hoje é " + DOW_LONGO[weekday] + ", " + d + " de " + MESES[m - 1] + " de " + y + " (data de Brasília).";
+    renderHolidays(y, m, d);
+  }
+
+  /* Feriados do ano */
+  var MESES_CURTO = ["jan", "fev", "mar", "abr", "mai", "jun", "jul", "ago", "set", "out", "nov", "dez"];
+  var holTitle = document.getElementById("holTitle");
+  var holSummary = document.getElementById("holSummary");
+  var holList = document.getElementById("holList");
+
+  function easterDate(y) {
+    var a = y % 19, b = Math.floor(y / 100), c = y % 100;
+    var dd = Math.floor(b / 4), e = b % 4, f = Math.floor((b + 8) / 25);
+    var g = Math.floor((b - f + 1) / 3);
+    var h = (19 * a + b - dd - g + 15) % 30;
+    var i = Math.floor(c / 4), k = c % 4;
+    var l = (32 + 2 * e + 2 * i - h - k) % 7;
+    var mm = Math.floor((a + 11 * h + 22 * l) / 451);
+    var month = Math.floor((h + l - 7 * mm + 114) / 31);
+    var day = ((h + l - 7 * mm + 114) % 31) + 1;
+    return { m: month, d: day };
+  }
+
+  function buildHolidays(y) {
+    var E = easterDate(y);
+    function at(mm, dd, off) { return new Date(Date.UTC(y, mm - 1, dd + (off || 0))); }
+    return [
+      { name: "Confraternização Universal", start: at(1, 1) },
+      { name: "Carnaval", start: at(E.m, E.d, -48), end: at(E.m, E.d, -47), facultativo: true },
+      { name: "Sexta-feira Santa", start: at(E.m, E.d, -2) },
+      { name: "Tiradentes", start: at(4, 21) },
+      { name: "Dia do Trabalho", start: at(5, 1) },
+      { name: "Corpus Christi", start: at(E.m, E.d, 60), facultativo: true },
+      { name: "Independência do Brasil", start: at(9, 7) },
+      { name: "Nossa Senhora Aparecida", start: at(10, 12) },
+      { name: "Finados", start: at(11, 2) },
+      { name: "Proclamação da República", start: at(11, 15) },
+      { name: "Consciência Negra", start: at(11, 20) },
+      { name: "Natal", start: at(12, 25) }
+    ];
+  }
+
+  function renderHolidays(y, m, d) {
+    var today = Date.UTC(y, m - 1, d);
+    var list = buildHolidays(y).sort(function (a, b) { return a.start - b.start; });
+    var nac = list.filter(function (h) { return !h.facultativo; }).length;
+    var fac = list.length - nac;
+    holTitle.textContent = "Feriados de " + y;
+    holSummary.textContent = nac + " feriados nacionais e " + fac + " pontos facultativos.";
+    holList.textContent = "";
+    var nextDone = false;
+
+    list.forEach(function (h) {
+      var last = h.end || h.start;
+      var li = el("li", "hol");
+      var chipText;
+      if (+last < today) {
+        li.classList.add("past");
+        chipText = "passou";
+      } else {
+        var diff = Math.round((h.start - today) / 86400000);
+        chipText = diff <= 0 ? "hoje" : diff === 1 ? "amanhã" : "em " + diff + " dias";
+        if (!nextDone) { li.classList.add("next"); nextDone = true; }
+      }
+
+      var sameMonth = h.end && h.end.getUTCMonth() === h.start.getUTCMonth();
+      var dayText = sameMonth ? h.start.getUTCDate() + "–" + h.end.getUTCDate() : String(h.start.getUTCDate());
+      var sub = h.end
+        ? DOW_LONGO[h.start.getUTCDay()].replace("-feira", "") + " e " + DOW_LONGO[h.end.getUTCDay()].replace("-feira", "")
+        : DOW_LONGO[h.start.getUTCDay()];
+      if (h.facultativo) sub += " · ponto facultativo";
+
+      var dateBox = el("div", "hol-date");
+      dateBox.appendChild(el("span", "hol-day", dayText));
+      dateBox.appendChild(el("span", "hol-mon", MESES_CURTO[h.start.getUTCMonth()]));
+      var info = el("div", "hol-info");
+      info.appendChild(el("span", "hol-name", h.name));
+      info.appendChild(el("span", "hol-sub", sub));
+
+      li.appendChild(dateBox);
+      li.appendChild(info);
+      li.appendChild(el("span", "hol-chip", chipText));
+      holList.appendChild(li);
+    });
+    var nextRow = holList.querySelector(".next");
+    holList.scrollTop = nextRow ? nextRow.offsetTop : 0;
+  }
+
+  /* Modo escuro */
+  var rootEl = document.documentElement;
+  var themeBtn = document.getElementById("themeBtn");
+  var iconMoon = document.getElementById("iconMoon");
+  var iconSun = document.getElementById("iconSun");
+  var themeLabel = document.getElementById("themeLabel");
+  var darkQuery = window.matchMedia ? window.matchMedia("(prefers-color-scheme: dark)") : null;
+
+  function isDark() {
+    var t = rootEl.getAttribute("data-theme");
+    if (t) return t === "dark";
+    return !!(darkQuery && darkQuery.matches);
+  }
+  function applyThemeUi() {
+    var dark = isDark();
+    themeBtn.setAttribute("aria-pressed", dark ? "true" : "false");
+    iconMoon.hidden = dark;
+    iconSun.hidden = !dark;
+    themeLabel.textContent = dark ? "Modo claro" : "Modo escuro";
+  }
+  try {
+    var saved = localStorage.getItem("horas-do-brasil-tema");
+    if (saved === "dark" || saved === "light") rootEl.setAttribute("data-theme", saved);
+  } catch (e) {}
+  themeBtn.addEventListener("click", function () {
+    var next = isDark() ? "light" : "dark";
+    rootEl.setAttribute("data-theme", next);
+    try { localStorage.setItem("horas-do-brasil-tema", next); } catch (e) {}
+    applyThemeUi();
+  });
+  if (darkQuery && darkQuery.addEventListener) darkQuery.addEventListener("change", applyThemeUi);
+  applyThemeUi();
+
+  tick();
+</script>
+
+</body></html>
