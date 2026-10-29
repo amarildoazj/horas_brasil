@@ -1,4 +1,9 @@
-<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<style>:root{color-scheme:light}body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style>
 <title>Horas do Brasil</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -82,8 +87,8 @@
   .time {
     font-family: var(--font-display); font-weight: 300;
     font-variant-numeric: tabular-nums lining-nums;
-    font-size: clamp(2.75rem, 11vw, 4rem); font-size: clamp(2rem, 25cqw, 4rem); line-height: 1; letter-spacing: -0.01em;
-    display: flex; align-items: baseline; flex-wrap: wrap; gap: 0 0.1em;
+    font-size: clamp(1.5rem, 11vw, 4rem); font-size: clamp(1.5rem, 19cqw, 4rem); line-height: 1; letter-spacing: -0.01em;
+    display: flex; align-items: baseline; flex-wrap: nowrap; white-space: nowrap; gap: 0 0.1em;
   }
   .time .sec { color: var(--accent); }
   .time .sep { color: var(--muted); font-weight: 300; }
@@ -100,7 +105,7 @@
 
   /* Brasília: destaque */
   .clock.main { padding: clamp(1.5rem, 4vw, 2.5rem); gap: 1.75rem; }
-  .clock.main .time { font-size: clamp(3.5rem, 17vw, 8rem); font-size: clamp(3rem, 25cqw, 8rem); }
+  .clock.main .time { font-size: clamp(2.25rem, 17vw, 8rem); font-size: clamp(2.25rem, 20cqw, 8rem); }
   .clock.main .date-value { font-size: clamp(1.5rem, 4vw, 2.25rem); }
   .clock.main .clock-name { font-size: 1.125rem; }
   .clock.main .states { font-size: 0.9375rem; }
@@ -204,7 +209,8 @@
     .time .sec { transition: opacity 0.15s ease; }
   }
 </style>
-
+</head>
+<body>
 <div class="wrap">
   <header>
     <div class="top">
@@ -501,5 +507,5 @@
 
   tick();
 </script>
-
-</body></html>
+</body>
+</html>
